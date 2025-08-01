@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Random Word</title>
+    <style>
+        /* CSS สำหรับตกแต่ง */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #1a73e8;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 1rem;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        input[type="number"] {
+            width: 70px;
+            padding: 10px;
+            font-size: 1rem;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #1a73e8;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1558b8;
+        }
+        #result-display {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border: 2px dashed #1a73e8;
+            border-radius: 5px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #202124;
+        }
+        .shuffling {
+            animation: blink 0.1s infinite;
+        }
+        @keyframes blink {
+            50% { background-color: #e8f0fe; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Easy Random Word</h1>
+        <p>ใส่คำที่ต้องการสุ่ม (1 คำต่อ 1 บรรทัด)</p>
+        <textarea id="word-input" placeholder="เช่น&#10;กินข้าว&#10;ดูหนัง&#10;ฟังเพลง&#10;อ่านหนังสือ"></textarea>
+        
+        <div class="controls">
+            <label for="count-input">ต้องการสุ่มจำนวน:</label>
+            <input id="count-input" type="number" value="1" min="1">
+        </div>
+        
+        <button id="random-button">เริ่มสุ่ม!</button>
+        
+        <div id="result-display">
+            <p>ผลลัพธ์จะแสดงที่นี่ ✨</p>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript สำหรับ Logic การทำงาน
+        const wordInput = document.getElementById('word-input');
+        const countInput = document.getElementById('count-input');
+        const randomButton = document.getElementById('random-button');
+        const resultDisplay = document.getElementById('result-display');
+
+        randomButton.addEventListener('click', () => {
+            // 1. รับค่าและแปลงข้อมูล
+            const words = wordInput.value
+                .split('\n') // แยกแต่ละบรรทัดเป็น item ใน array
+                .map(word => word.trim()) // ตัดช่องว่างหน้า-หลัง
+                .filter(word => word !== ''); // กรองบรรทัดที่ว่างเปล่าออก
+
+            const count = parseInt(countInput.value, 10);
+
+            // 2. ตรวจสอบข้อมูลเบื้องต้น
+            if (words.length === 0) {
+                resultDisplay.innerHTML = '<p style="color: red;">กรุณาใส่คำศัพท์ก่อน</p>';
+                return;
+            }
+            if (count > words.length) {
+                resultDisplay.innerHTML = `<p style="color: red;">ต้องการสุ่ม ${count} คำ แต่มีให้เลือกแค่ ${words.length} คำ</p>`;
+                return;
+            }
+
+            // 3. สร้าง Animation สไตล์ Slot
+            resultDisplay.innerHTML = '<p>กำลังสุ่ม...</p>';
+            resultDisplay.classList.add('shuffling');
+
+            const shuffleInterval = setInterval(() => {
+                // ระหว่างรอ จะสุ่มคำมาแสดงแบบเร็วๆ
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                resultDisplay.innerHTML = `<p>${randomWord}</p>`;
+            }, 100); // เปลี่ยนคำทุกๆ 100ms
+
+            // 4. สุ่มจริงและแสดงผล
+            setTimeout(() => {
+                clearInterval(shuffleInterval); // หยุด animation
+                resultDisplay.classList.remove('shuffling');
+
+                // อัลกอริทึมสับไพ่ (Fisher-Yates Shuffle) เพื่อให้ผลลัพธ์ไม่ซ้ำ
+                for (let i = words.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [words[i], words[j]] = [words[j], words[i]]; // สลับตำแหน่ง
+                }
+
+                // เลือกมาตามจำนวนที่ต้องการ
+                const finalResult = words.slice(0, count);
+
+                // แสดงผลลัพธ์
+                resultDisplay.innerHTML = finalResult.map(word => `<p>${word}</p>`).join('');
+
+            }, 2000); // หน่วงเวลา 2 วินาทีเพื่อให้ดูเหมือนกำลังคิด
+        });
+    </script>
+</body>
+</html>
